@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>BE-AD Assignment Management System</title><link rel="shortcut icon" href="icon.ico"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content=""><meta name="author" content=""><script src="/jquery.js"></script><link type="text/css" href="/jquery-ui.css" rel="stylesheet"><script src="/jquery-ui.js"></script><script src="/moment.js"></script><link type="text/css" href="/bootstrap.min.css" rel="stylesheet"><link type="text/css" href="/bootstrap.custombutton.css" rel="stylesheet"><script src="/bootstrap.min.js"></script><link type="text/css" href="/bootstrap-datetimepicker.min.css" rel="stylesheet"><script src="/bootstrap-datetimepicker.min.js"></script><script src="/fay/DynamicContents.js"></script><link type="text/css" href="/katex/katex.min.css" rel="stylesheet"><script src="/katex/katex.min.js"></script><script>window.onload = function(){ var mathElements = document.getElementsByClassName("math"); for (var i=0; i < mathElements.length; i++) { var texText = mathElements[i].firstChild; katex.render(texText.data, mathElements[i]); }}</script></head></html><body><div class="navbar navbar-default navbar-fixed-top"><style>.body{padding-top:70px}</style><div class="container"><div class="navbar-header"><a href="/home" class="navbar-brand">BE-AD</a><button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse"><span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button></div><div class="collapse navbar-collapse navbar-ex1-collapse"><ul class="nav navbar-nav navbar-right"><li><a>E1CS55 / E1CS55</a></li><li><a href="/notifications" id="link-notifications">Notifications</a></li><li><a href="/profile" id="link-profile">Profile</a></li><li><a href="/logout" id="link-logout">Logout</a></li></ul></div></div></div><div class="container"><div class="row"><div class="col-md-12"><hr></div></div><div class="row"><div class="col-md-12"><div class="page-header"><h2>Submission</h2></div></div></div><div class="row"><div class="col-md-12"><table class="table table-bordered table-condensed table-hover table-striped"><tbody><tr><td><b>Course: </b></td><td>Design of Distributed Systems - DDS</td></tr><tr><td><b>Teacher: </b></td><td>Bozo Istvan, Reale Anna, Toth Melinda</td></tr><tr><td><b>Assignment: </b></td><td>Retake 1</td></tr><tr><td><b>Deadline: </b></td><td>2941-11-13, 10:40:00</td></tr><tr><td><b>Time left: </b></td><td><a id="ctd">-day(s) --:--:--</a><script>ctdcountdown();function ctdcountdown() {var minsecs = 60;var hoursecs = minsecs * 60;var daysecs = hoursecs* 24;var mstime = 29127424059 * 1000;var timestamp = new Date;var interval = setInterval(function() {var el = document.getElementById("ctd");var now = new Date;var dt = now - timestamp;timestamp = now;mstime = mstime - dt;var time = Math.round( mstime / 1000 );if(time < 0) {el.innerHTML = "Deadline is reached";clearInterval(interval);return;}var edays   = Math.floor( time / daysecs );var ehours1 = time % daysecs;var ehours  = Math.floor( ehours1 / hoursecs );if (ehours < 10) ehours = "0" + ehours;var emins1  = ehours1 % hoursecs;var emins   = Math.floor( emins1 / minsecs );if (emins < 10) emins = "0" + emins;var esecs   = emins1 % minsecs;if (esecs < 10) esecs = "0" + esecs;var text="";if(edays == 0) {if(ehours == 0) {text = emins + ':' + esecs;} else {text = ehours + ':' + emins + ':' + esecs;}} else {text = edays + " day(s) " + ehours + ':' + emins + ':' + esecs;}el.innerHTML = text;}, 1000);}</script></td></tr><tr><td><b>Reamining:</b></td><td>1</td></tr></tbody></table></div></div><div class="row"><div class="col-md-12"><h2>Solution</h2><form method="post" action="/submission?asg-key=287" accept-charset="UTF-8" id="submission-form" enctype="multipart/form-data"><p>This assignment can only accept submissions by providing the password.</p><div class="form-group"><label for="submission-pwd">Password for the assignment:</label><input class="form-control" type="password" required="" name="submission-pwd" id="submission-pwd"></div><div class="form-group"><label for="submission-text"></label><textarea class="form-control" required="" rows="8" id="submission-text" name="submission-text" style="font-family: monospace;"></textarea></div><button type="submit" name="submit-solution-btn" class="btn btn-block btn-default">Submit</button></form></div></div><div class="row"><div class="col-md-12"><hr></div></div><div class="row"><div class="col-md-12"><div class="row"><div class="col-md-12"><div class="list-group" style="max-height: 168px; overflow: auto;"><a href="/submission-details?asg-key=287&amp;submission-key=9799" class="list-group-item">2018-11-07, 10:26:24<span class="badge">Non-evaluated</span></a></div></div></div></div></div><div class="row"><div class="col-md-12"><h2>Description</h2><div style="margin-left:0px; background: lightgray"><p><strong>Please take into account the followings:</strong></p>
+<ul>
+<li><strong>do not use list comprehensions</strong></li>
+<li><strong>do not use if expressions</strong></li>
+<li><strong>you may use library functions, but minimum one solution has to be implemented as a recursive function</strong></li>
+<li><strong>using class materials, additional Erlang files, any source from the internet are not allowed!</strong></li>
+</ul>
+<h1 id="task-no.-0">Task no. 0:</h1>
+<p>Copy the following declaration form to your Erlang file and fill in the required data:</p>
+<pre><code>%% &lt;Name&gt;
+%% &lt;Neptun ID&gt;
+%% &lt;DDS, Retake 1&gt;
+%% &lt;7.11.2018.&gt;
+%% This solution was submitted and prepared by &lt;Name, Neptun ID&gt; for the DDS Retake Test Sequential.
+%% I declare that this solution is my own work.
+%% I have not copied or used third-party solutions.
+%% I have not passed my solution to my classmates, neither made it public.
+%% Students’ regulation of Eötvös Loránd University (ELTE Regulations Vol. II. 74/C. § ) states that as long as a student presents another student’s work - or at least the significant part of it - as his/her own performance, it will count as a disciplinary fault. The most serious consequence of a disciplinary fault can be a dismissal of the student from the University.</code></pre>
+<h2 id="the-link-of-the-documentation.">The link of the <a href="http://erlang.org/doc/man/">documentation.</a></h2>
+<h1 id="task-no.-1-merging-sorted-lists">Task no. 1: Merging sorted lists</h1>
+<p>Define a <strong>recursive</strong> function <code>merge/2</code> that takes two already sorted lists <code>L1</code> and <code>L2</code> as arguments. The function returns a sorted list containing all the elements of <code>L1</code> and <code>L2</code>.</p>
+<pre><code>merge(L1::list(any()), L2::list(any())) -&gt; Result::list(any())</code></pre>
+<h2 id="test-cases">Test cases:</h2>
+<p><strong>Do not forget to change the name of the module!</strong></p>
+<pre><code>retake:merge([1,3], [2]) == [1,2,3]
+retake:merge([1,3], [2,2]) == [1,2,2,3]
+retake:merge([1,2,3], [2,2]) == [1,2,2,2,3]
+retake:merge([1,2,3], [1,2,2,4,5,6]) == [1,1,2,2,2,3,4,5,6]
+retake:merge([1,2,3], []) == [1,2,3]
+retake:merge([], [3]) == [3]
+retake:merge([1,2,3], [4,5,6]) == [1,2,3,4,5,6]
+retake:merge([1,1,2,3], [2,3,4]) == [1,1,2,2,3,4]</code></pre>
+<h1 id="task-no.-2-chunking-a-list">Task no. 2: Chunking a list</h1>
+<p>Define a function <code>chunk/2</code> that takes two arguments: a list <code>L</code> and a positive integer value <code>N</code>. The function chunks the list into sublists that has a length <code>N</code>. When the length of the original argument list (<code>L</code>) is not divisible by <code>N</code>, the last chunk will contain fewer elements than <code>N</code>.</p>
+<pre><code>chunk(L::list(), N::positive_integer()) -&gt; Result::list()</code></pre>
+<h2 id="test-cases-1">Test cases:</h2>
+<p><strong>Do not forget to change the name of the module!</strong></p>
+<pre><code>retake:chunk([1,2,3], 1) == [[1],[2],[3]]
+retake:chunk([1,2,3], 2) == [[1,2],[3]]
+retake:chunk([1,2,3], 3) == [[1,2,3]]
+retake:chunk([1,2,3], 4) == [[1,2,3]]
+retake:chunk([1,2,3,4,5], 2) == [[1,2],[3,4],[5]]
+retake:chunk([], 2) == []</code></pre>
+<h1 id="task-no.-3-updating-values-in-a-map">Task no. 3: Updating values in a map</h1>
+<p>Define a function <code>update_value/3</code> that takes three arguments: <code>List</code> is a list of <code>Key</code> and <code>Function</code> pairs, <code>Init</code> is an arbitrary value, and <code>Map</code> is map containing values associated to keys.</p>
+<p>The function selects an element from the list (a <code>Key</code> and <code>Function</code> pair), searches the <code>Value</code> associated with <code>Key</code> in the <code>Map</code> and updates the <code>Value</code> using the function <code>F</code>. If the <code>Key</code> is not found, then we add a new field to the <code>Map</code> with the <code>Key</code> and the initial value <code>Init</code>.</p>
+<pre><code>update_values(List::list(tuple(term(), fun())), Init::term(), Map::map()) -&gt; Result::map()</code></pre>
+<h2 id="test-cases-2">Test cases:</h2>
+<p><strong>Do not forget to change the name of the module!</strong></p>
+<pre><code>retake:update_values([{melinda,fun(X) -&gt; 10*X end}], 1000, #{melinda=&gt;12, anna=&gt;24}) == #{anna =&gt; 24,melinda =&gt; 120}                      
+retake:update_values([], 1000, #{melinda=&gt;12, anna=&gt;24}) == #{anna =&gt; 24,melinda =&gt; 12}
+retake:update_values([{melinda,fun(X) -&gt; 10*X end} ,{ anna, fun(X) -&gt; 100*X end}], 1000, #{melinda=&gt;12, anna=&gt;24}) == #{anna =&gt; 2400,melinda =&gt; 120}
+retake:update_values([{melinda,fun(X) -&gt; 10*X end} ,{ anna, fun(X) -&gt; 100*X end}, {an, fun(X) -&gt; X end}], 1000, #{melinda=&gt;12, anna=&gt;24}) == #{an =&gt; 1000,anna =&gt; 2400,melinda =&gt; 120}</code></pre>
+<h1 id="task-no.-4-summing-the-elements-of-a-list">Task no. 4: Summing the elements of a list</h1>
+<p>Define a function <code>subsum/1</code> that takes a list as an argument and returns the sum of its sublists. For example <code>subsum([1,2,3])</code> returns <code>[1, 1+2, 1+2+3]</code>. During the implementation, each addition has to be evaluated only once. So when computing <code>1+2+3</code> you should reuse the already calculated value <code>1+2</code>.</p>
+<pre><code>subsum(List::list()) -&gt; Result::list()</code></pre>
+<h2 id="test-cases-3">Test cases:</h2>
+<p><strong>Do not forget to change the name of the module!</strong></p>
+<pre><code>retake:subsum([]) == []
+retake:subsum([1]) == [1]
+retake:subsum([1,2]) == [1,3]
+retake:subsum([1,2,3]) == [1,3,6]
+retake:subsum([1,2,3,4,5,6]) == [1,3,6,10,15,21]</code></pre>
+<h1 id="task-no.-5-sorting-a-list-using-the-mergesort-algorithm">Task no. 5: Sorting a list using the mergesort algorithm</h1>
+<p>Define a function <code>sort/1</code> using the defined functions <code>merge/2</code> and <code>chunk/2</code>. The merge based sorting algorithm divides the list to sublists, apply the sorting recursively on the sublists and merges the subresults.</p>
+<pre><code>sort(List::list()) -&gt; Result::list()</code></pre>
+<h2 id="test-cases-4">Test cases:</h2>
+<p><strong>Do not forget to change the name of the module!</strong></p>
+<pre><code>retake:sort([1,2,3]) == [1,2,3]
+retake:sort([]) == []
+retake:sort([4,5,2]) == [2,4,5]
+retake:sort([4,2,3,4,5,2]) == [2,2,3,4,4,5]</code></pre></div></div></div><div class="row"><div class="col-md-12"><hr></div></div></div></body>
