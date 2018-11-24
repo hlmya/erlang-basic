@@ -65,12 +65,11 @@ dolphin3() ->
 % Q: flush?
 %https://learnyousomeerlang.com/the-hitchhikers-guide-to-concurrency#dont-panic
 %=============== seventh.erl
-% run(N) ->
-	% lists:foreach(fun(_) -> spawn(fun task/0) end, lists:seq(1, N)).
+run1(N) ->
+	lists:foreach(fun(_) -> spawn(fun task/0) end, lists:seq(1, N)).
 	
-% task() ->
-	% io:format("MyPid: ~p~n", [self()]).
-	% 0.
+task() ->
+	io:format("MyPid: ~p~n", [self()]).
 
 fib(0) ->
 	1;
@@ -82,50 +81,7 @@ fib(N) ->
 call(List) ->
 	lists:map(fun fib/1, List).
 	
-call_par(List) ->
-	MyPid = self(),
-	lists:map(fun(X) -> spawn(fun() -> MyPid ! pr1:fib(X) end) end, List),
-	lists:map(fun(_X) -> receive
-							A -> A
-						 end
-			  end, List).
-%Q: call_par -> MyPid is PID of SHELL or Pid of call_par? call_par is not current process
-%Q: lists:map(fun(X) -> spawn(fun() -> MyPid ! pr1:fib(X) end) end, List) => list of PID
-%Q: lists:map(fun(_X) -> receive... -> collect result => list of PID include results?
-%Q: Value type that "receive" accepts?
-			
-call_par_ord(List) ->
-	MyPid = self(),
-	lists:map(fun(X) -> spawn(fun() -> MyPid ! {X, pr1:fib(X)} end) end, List),
-	lists:map(fun(X) -> receive
-							{X, A}  -> A
-						 end
-				end, List).
-
-par_map_ord(F, List) ->
-	MyPid = self(),
-	Pids = lists:map(fun(X) -> spawn(fun() -> MyPid ! {self(), F(X)} end) end, List),
-	lists:map(fun(Pid) -> receive
-							{Pid, A}  -> A
-						 end
-				end, Pids).
-% Q: par_map_ord get a pair {self(),F(X)} instead of {X,F(X)}. Cannot use X? 
-% Q: call_par_ord and par_map_ord are the same in general?
-
-
-
-	%receive
-		%1 -> 1;
-		%Apple when is_atom(Apple)-> atom;
-		%Value -> Value
-	%end.
-	
-	
-% lists:map(fun(X) -> spawn(fun() -> MyPid ! {self(), F(X)} end) end, List)
-% lists:map(fun(X) -> spawn(fun() -> self() ! {X, pr1:fib(X)} end) end, [31,23,36,23,35])
-
 %=============== skeletons.erl
-	
 run(N) ->
 	MyPid = self(),
 	Last = lists:foldl(fun(_, PrevPid) -> 
@@ -140,6 +96,7 @@ task(Prev) ->
 	receive
 		ok -> Prev ! ok
 	end.
+
 % Q: Last!ok -> Last is a list of Pid????, how to send message?
 
 %Q:Why running time are different when re-run many times?
@@ -191,6 +148,69 @@ worker({Collector, Dispatcher, F} = Args) ->
 			Collector ! F(Data),
 			worker(Args)
 	end.
+	
+	
+%========== youtube
+loop() ->
+	receive
+		{From,Msg} ->
+			From ! {self(),Msg},
+			loop();
+		stop ->
+			true
+	end.
+	
+go() -> 
+	Pid = spawn(pr1,loop,[]),
+	Pid ! {self(), kaka},
+	receive
+		{PidLoop, Msg} -> 
+			io:format("~w~n",[Msg])
+	end,
+	PidLoop ! stop.
+%===========
+main(T) ->
+	receive
+		{Pid, stop} -> Pid ! stopped;
+		{Pid, N} ->
+			Next = N + T,
+			Pid ! Next,
+			main(Next)
+	end.
+
+start1() -> spawn(pr1,main,[0]).
+%=================
+a() ->
+	% PidB = spawn(fun() -> b() end),
+	PidB = spawn(pr1, b, []),
+	PidB ! {self(), atoma},
+	receive
+		{PidBB, Msg} -> io:format("A() received ~p~n",[Msg])
+	end.
+	
+b() ->
+	receive
+		{PidAA, Msg} -> 
+			io:format("B received ~p~n",[Msg]),
+			PidAA ! {self(), Msg}
+	end.
+%===============
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
