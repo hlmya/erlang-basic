@@ -4,26 +4,29 @@
 worker(PidNext) ->
 	receive
 		{forward,N} ->
-			PidNext ! (N+1),
+			PidNext ! {forward,N+1},
 			worker(PidNext);
 		quit ->
 			PidNext ! quit
 	end.
 	
 start() ->
-	MyPid = self(),
-	WorkerPid = spawn(fun() -> worker(MyPid) end),
+	Last = lists:foldl(fun(_,Pid) -> 
+				spawn(ring, worker,[Pid])end,self(),lists:seq(1,5)),
+	% lists:foldl starts 5 processes A→B→C→D→E and links P to A but not spawn P?
+	% Last is Pid of E.
+	% when T(1) -> PidE ! {forward,1} ???
 	fun(X) -> 
 		case X of
 			quit -> 
-				WorkerPid ! quit,
+				Last ! quit,
 				receive
 					quit -> quit
 				end;
 			_ -> 
-				WorkerPid ! {forward,X},
+				Last ! {forward,X},
 				receive
-					Result -> Result
+					{forward,Result} -> Result
 				end
 		end
 	end.
