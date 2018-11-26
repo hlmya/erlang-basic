@@ -37,7 +37,7 @@ reduce(MapReducePid,CurrentResult) ->
 							[{Word,1}|CurrentResult];
 						{Word,N} ->
 							lists:keyreplace(Word,1,CurrentResult,{Word, N+1})
-						end,
+					end,
 			reduce(MapReducePid,NewList)
 	after
 		2000 ->
