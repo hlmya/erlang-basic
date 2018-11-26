@@ -1,33 +1,97 @@
 -module(sampletest).
 -compile(export_all).
-
-mapReduce(M, Text) ->
+			
+mapReduce(M,Text)->
 	MapReducePid = self(),
-	ReducePid = spawn(fun() -> reduce(MapReducePid,#{})end),
-	Last = lists:foldl(fun() -> spawn(fun() -> mapReduce(ReducePid))end,MapReducePid, lists:seq(1,M))
-	Lines = string:tokens(Text, "\n"),
-	lists:map(fun(Line) -> Last ! Line end, Lines),
-	...
-	
-map(ReducePid) ->
+	RedPid = spawn(?MODULE,reduce, [MapReducePid,[]]),
+	MapPids = lists:map(fun(_)->spawn(fun()->map(RedPid)end)end,lists:seq(1,M)),
+	L = string:tokens(Text,"\n"),
+	send(MapPids,L),
 	receive
-		Line ->
-			Words = string:tokens(Line," "),
-			lists:map(fun(Word) -> ReducePid ! {Word,1} end, Words)
+		{ok,RedPid,Result} -> 
+			killAll([RedPid|MapPids]),
+			Result
 	end.
-	
-reduce(MapReducePid,CurrentResult) ->
+
+send(_,[]) -> ok;
+send(MP,[LH|LT])->
+	Pid = lists:nth(rand:uniform(length(MP)),MP),
+	Pid ! {map, LH},
+	send(MP,LT).
+
+map(RPid) ->
 	receive
-		{Word,1} ->
-			case CurrentResult of
-				#{Word := Val} -> CurrentResult#{Word => Val + 1};
-				_ -> CurrentResult#{Word => 1}
-			end
-	after
-		20 ->
-			io:format("I am done!~n",[]),
-			MapReducePid ! CurrentResult
+		{map,L} -> 
+			Words = string:tokens(L," "),
+			lists:foreach(fun(W) -> RPid ! {W,1} end, Words),
+			map(RPid) % starting again because need to get random
 	end.
-			
-			
+
+reduce(MapReducePid,CResult) ->
+	receive
+		{W,1} ->
+			Exist = lists:keyfind(W,1,CResult),
+			NewRes = case Exist of
+						false -> [{W,1}|CResult];
+						{W,N} -> lists:keyreplace(W,1,CResult,{W,N+1})
+					 end,
+			reduce(MapReducePid,NewRes)
+	after 2000 -> 
+		io:format("I'm done~n",[]),
+		MapReducePid ! {ok,self(),CResult}
+	end.
+
+killAll(Pids) ->
+	lists:foreach(fun(ProcessId) -> exit(ProcessId,kill) end, Pids),
+	io:format("Killed ~p~n",[Pids]).
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
