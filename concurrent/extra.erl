@@ -32,11 +32,11 @@ map(ReducePids) ->
 reduce(MapReducePid,CurrentResult) ->
 	receive
 		{Word,1} ->
-			NewList =	case lists:keyfind(Word, 1, CurrentResult) of
-							false ->
-								[{Word,1}|CurrentResult];
-							{Word,N} ->
-								lists:keyreplace(Word,1,CurrentResult,{Word, N+1})
+			NewList = case lists:keyfind(Word, 1, CurrentResult) of
+						false ->
+							[{Word,1}|CurrentResult];
+						{Word,N} ->
+							lists:keyreplace(Word,1,CurrentResult,{Word, N+1})
 						end,
 			reduce(MapReducePid,NewList)
 	after
