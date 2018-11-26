@@ -1,5 +1,5 @@
 -module(extra).
--compile([export_all]).
+-compile(export_all).
 %extra 1
 mapReduce(M,R, Text) ->
 	MapReducePid = self(),
@@ -33,57 +33,14 @@ reduce(MapReducePid,CurrentResult) ->
 	receive
 		{Word,1} ->
 			NewList = case lists:keyfind(Word, 1, CurrentResult) of
-						false ->
-							[{Word,1}|CurrentResult];
-						{Word,N} ->
-							lists:keyreplace(Word,1,CurrentResult,{Word, N+1})
-					end,
+				false ->
+					[{Word,1}|CurrentResult];
+				{Word,N} ->
+					lists:keyreplace(Word,1,CurrentResult,{Word, N+1})
+			end,
 			reduce(MapReducePid,NewList)
 	after
 		2000 ->
 			io:format("I'm done~n",[]),
 			MapReducePid ! {ok, CurrentResult}
 	end.
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
