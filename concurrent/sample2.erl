@@ -48,7 +48,9 @@ dispatcher(MasterPid, N, Acc)->
 					UpdatedResult = [Result | Acc],
 					io:format("UpdatedResult: ~p~n",[UpdatedResult]),
 					case length(UpdatedResult)  >= 2 of
-						true -> WorkerPid ! {self(), merge, UpdatedResult};
+						true -> 
+							WorkerPid ! {self(), merge, UpdatedResult},
+							dispatcher(MasterPid, N, UpdatedResult);
 						false -> dispatcher(MasterPid, N, UpdatedResult)
 					end
 			end
