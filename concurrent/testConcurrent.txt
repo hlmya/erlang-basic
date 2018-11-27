@@ -1,0 +1,158 @@
+>The link of the [documentation.](http://erlang.org/doc/man/)
+--------------------------------------------------------
+
+The following tasks can be solved also using list comprehension and any standard library module.    
+
+Task no. 0:
+===========
+
+Copy the following declaration form to your Erlang file and fill in the required data:
+
+~~~~
+%% <Name>
+%% <Neptun ID>
+%% <DDS, TEST2>
+%% <11.04.2018>
+%% This solution was submitted and prepared by <Name, Neptun ID> for the DDS Test Concurrent.
+%% I declare that this solution is my own work.
+%% I have not copied or used third party solutions.
+%% I have not passed my solution to my classmates, neither  made it public.
+%% Students’ regulation of Eötvös Loránd University (ELTE Regulations Vol. II. 74/C. § ) states that as long as a student presents another student’s work - or at least the significant part of it - as his/her own performance, it will count as a disciplinary fault. The most serious consequence of a disciplinary fault can be dismissal of the student from the University.
+~~~~
+
+
+Task no. 1: 
+=================================
+
+Implement a Parallel merge sort in Erlang using a master process and a pool of workers :   
+
+- master/2 divide a list L in N parts and spawns N workers each with the order to sort a part of the list. 
+Print on the console the sent lists togheter with the process that will be handling them. Than waits for the answer. After the master receive the result it kills all the workers.(No need for fancy implementatins, just make sure that no process is running at the end of the computation)
+
+- worker/0 is a generic function that receive a  message containing a Process id PidD(the dispatcher one) a Function and a List to apply the function to. It return the result to PidD and restart itself. 
+
+- dispatcher/3 collects the sorted lists from the worker and send them back to be merged. The dispatcher takes as imputs:a list of workers processes Id, the length of the original list to be sorted and a Result variable keeping track of the sorted lists. 
+Every time a worker send a sorted list, the dispatcher checks if it has at least two sorted lists available in Results and send 2 of them to the worker to merge them. Merged lists must be saved also into Results until there is just one list in the pool whose size is the length of the original list. At this point you're done: the dispatcher send the result to the master and dies. Master makes the workers stop and displays it. 
+
+TIPS: As sort function you can use lists:sort, to merge 2 sorted lists you can use lists:merge, to divide the list you can use split/2: pass to it your list and N. 
+
+
+%split(L,N)->  Len= length(L)div N, split(L,Len,N).
+%split(L,_,1)-> [L];
+%split(L,Len,N)-> LN=lists:sublist(L,Len),[LN]++split(L--LN,Len,N-1).
+
+%%%%%%%%%%%%#1  
+~~~
+master(integer(),list()) -> list()
+worker()-> true
+dispatcher(list(pid())),integer(),list(list()))-> true
+
+~~~
+
+Test cases:
+-----------
+
+**Do not forget to change the name of the module!**
+
+~~~
+
+test:master(3,[1,2,3,4,54,3,1,2,6,77,8,0]).
+Sent: [1,2,3,4] to <0.62.0>   
+Sent: [54,3,1,2] to <0.63.0>   
+Sent: [6,77,8,0] to <0.64.0>   
+[0,1,1,2,2,3,3,4,6,8,54,77]
+
+~~~
+
+Task no. 2: 
+=================================
+
+Create a functions end_work/1 that explicitly kills all the processes passed to it than prints a "Work done" message on the console, modify master to use it to kill all the workers.
+
+%%%%%%%%%%%%#2  
+~~~
+
+end_work(list())-> "work done ~p ~n", [list()]
+~~~
+Test cases:
+-----------
+
+**Do not forget to change the name of the module!**
+
+~~~
+>test:master(3,[1,2,3,4,54,3,1,2,6,77,8,0]).
+>Sent: [1,2,3,4] to <0.62.0>   
+>Sent: [54,3,1,2] to <0.63.0>   
+>Sent: [6,77,8,0] to <0.64.0>   
+>Work done [<0.62.0>,<0.63.0>,<0.64.0>] 
+>[0,1,1,2,2,3,3,4,6,8,54,77]
+
+test if your workers are alive:
+>process_info(pid(0,62,0)).
+>undefined
+
+~~~
+
+
+Task no. 3: 
+=================================
+Update the distpatcher so that, in case a worker dies, it restart a new one.  Modify the worker to exit with reason "unused" after 10 seconds of inactivity printing on the console "Suicide!".
+
+Test what happen if you set up the worker to die after 10 milliseconds.
+
+
+%%%%%%%%%%%%#3
+~~~
+
+dispatcher(list(pid())),integer(),list(list()))
+~~~
+Test cases:
+-----------
+
+**Do not forget to change the name of the module!**
+
+~~~
+%% force worker to die after 10 milliseconds
+
+test:master(3,[1,2,3,4,54,3,1,2,6,77,8,0]).
+Sent: [1,2,3,4] to <0.97.0>   
+Sent: [54,3,1,2] to <0.98.0>   
+Sent: [6,77,8,0] to <0.99.0>   
+Suicide! <0.97.0>  
+Suicide! <0.98.0> 
+Work done [<0.97.0>,<0.98.0>,<0.99.0>] 
+[0,1,1,2,2,3,3,4,6,8,54,77]
+
+
+
+Task no. 4: 
+=================================
+
+Currently your dispatcher process dies after it finishes its job, create a monitor that restart it right after  (you must use spawn_monitor/3 in order to spawn a process and start monitoring it in one step).  TIP: You can create an helper recursive function in the master to react to the death of the dispatcher. 
+
+
+#Extra point: The distpatcher will forever setup new workers, define a mechanism of your choice to stop it.     
+
+
+%%%%%%%%%%%%#4 
+~~~
+master(integer(),list()) -> list()
+~~~
+Test cases:
+-----------
+
+**Do not forget to change the name of the module!**
+
+~~~
+test:master(3,[1,2,3,4,54,3,1,2,6,77,8,0]).
+Sent: [1,2,3,4] to <0.97.0>   
+Sent: [54,3,1,2] to <0.98.0>   
+Sent: [6,77,8,0] to <0.99.0>   
+Work done [<0.97.0>,<0.98.0>,<0.99.0>] 
+[0,1,1,2,2,3,3,4,6,8,54,77]
+Dispatcher dead
+New Dispatcher
+Suicide! <0.97.0> 
+Suicide! <0.98.0> 
+%%% infinite loop repeating those
+

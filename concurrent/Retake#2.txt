@@ -1,0 +1,231 @@
+The link of the [documentation.](http://erlang.org/doc/man/)
+--------------------------------------------------------
+
+Task no. 0:
+===========
+
+Copy the following declaration form to your Erlang file and fill in the required data:
+
+~~~~
+%% <Name>
+%% <Neptun ID>
+%% <DDS, RTEST2>
+%% <31.05.2018>
+%% This solution was submitted and prepared by <Name, Neptun ID> for the DDS  Retake Test Concurrent.
+%% I declare that this solution is my own work.
+%% I have not copied or used third party solutions.
+%% I have not passed my solution to my classmates, neither  made it public.
+%% Students’ regulation of Eötvös Loránd University (ELTE Regulations Vol. II. 74/C. § ) states that as long as a student presents another student’s work - or at least the significant part of it - as his/her own performance, it will count as a disciplinary fault. The most serious consequence of a disciplinary fault can be dismissal of the student from the University.
+~~~~
+
+
+Task n. 1 
+=================================
+
+Implement a simplified Map-reduce for word counting. It consist of a mapReduce/2 function spawning M map/1 and one reduce/2 function. The functions are described below.
+
+ 
+mapReduce(M,Text): 
+
+1-starts a Reduce process that take MapReduce ProcessId and has a temporary list where to store the word count
+2-starts all the M Map, passing them the R reducer ProcessId
+3-For each line of input data  it randomly pick one of the M mapper processes and send the line to it (you can use string:tokens(Text, "\n"). to separate lines)
+
+4-Waits for final result from the reduce process
+5-Kills all the workers and the reduce
+6-Return the collected result
+
+
+The map(ReducePid) :
+
+1-Receive the input line
+2-separate all worlds in the line and put them in a tuple {Word, 1} 
+(you do not have to handle special cases like having puctuation attached to a word or plurals, just consider the line as a long lists of characters separated by spaces, use string:tokens to get a list of words) 
+3-send a tuple at a time to the reducer
+
+
+the reduce(MapReducePid,currentResult):
+
+1- Receive the key, value from the Mapper process ({Word,1})
+2- Get the current accumulated value by the key. 
+3- If no accumulated value is found, just append to the result the tuple.
+4- if it finds it, update the word count of 1
+5- Store the new accumulated value under the key
+6- Repeat until it does not receive any more message for 2 secondsin a row
+7- print "I am done!" and send the result to mapReduce
+
+Practical example:
+
+	mapReduce(2,"example \n example for you\n you see")
+
+	the mapReduce will send 3 lines randomly choosing between the  2 created map processes:
+	"example" , "example for you" and "you see"
+
+	the map process that receive "example for you" will separate it by the space (" ") and send three messages to the reducer:
+	{"example",1} {"for",1} {"you",1}
+
+	let's say the reducer already received the other two lines, it's currentResult will be looking like : [{"see",1},{"you",1},{"example",1}] 
+
+	than he will update it for every of the 3 received messages from the map process
+	=> [{"see",1},{"you",1},{"example",2}] => [{"for",1},{"see",1},{"you",1},{"example",1}] 
+	=>[{"for",1},{"see",1},{"you",2},{"example",1}] 
+
+	after 2 seconds no more message arrives the reduce will send   [{"for",1},{"see",1},{"you",2},{"example",1}] back to the mapReduce
+	 
+
+%%%%%%%%%%%%#1  
+~~~
+mapReduce(integer(),string()) -> list(tuple(string(),integer()))
+~~~
+
+Test execution:
+-----------
+
+**Do not forget to change the name of the module!**
+
+~~~
+test:mapReduce(3,"She sells seashells by the seashore \n the shells she sells are surely seashells \n so if she sells  shells on the seashore \n I'm sure she sells seashore shells").
+
+Sent: "She sells seashells by the seashore " to <0.89.0>   
+Sent: " the shells she sells are surely seashells " to <0.91.0>   
+Sent: " so if she sells  shells on the seashore " to <0.91.0>   
+Sent: " I'm sure she sells seashore shells" to <0.89.0>   
+Done! 
+Killed [<0.88.0>,<0.89.0>,<0.90.0>,<0.91.0>] 
+[{"sure",1},
+ {"I'm",1},
+ {"on",1},
+ {"if",1},
+ {"so",1},
+ {"surely",1},
+ {"are",1},
+ {"she",3},
+ {"shells",3},
+ {"seashore",3},
+ {"the",3},
+ {"by",1},
+ {"seashells",2},
+ {"sells",4},
+ {"She",1}]
+
+~~~
+
+For higher grade try to integrate some of the following 3 Extra in your solution:
+
+=================================
+#Extra#1 multiple reducers : modify the mapReduce to instantiate a user defined number of reducer functions. 
+The map processes should receive the list of available reducer and randomly select to wich one to send the tuple. When the master receive all results it should send back them to a reducer to get the final result (to prove it print "Send to Reduce... "). 
+
+%%%%%%%%%%%%#E1  
+~~~
+mapReduce(integer(),integer(),string()) -> list(tuple(string(),integer()))
+~~~
+
+Test execution:
+-----------
+
+**Do not forget to change the name of the module!**
+
+~~~
+test:mapReduce(3,2,"She sells seashells by the seashore \n the shells she sells are surely seashells \n so if she sells  shells on the seashore \n I'm sure she sells seashore shells").
+
+Sent: "She sells seashells by the seashore " to <0.89.0>   
+Sent: " the shells she sells are surely seashells " to <0.91.0>   
+Sent: " so if she sells  shells on the seashore " to <0.91.0>   
+Sent: " I'm sure she sells seashore shells" to <0.89.0>   
+Done <0.87.0>!
+Done <0.88.0>!
+Send to Reduce... 
+Done <0.88.0>!
+Killed [<0.87.0>,<0.88.0>,<0.89.0>,<0.90.0>,<0.91.0>,] 
+[{"sure",1},
+ {"I'm",1},
+ {"on",1},
+ {"if",1},
+ {"so",1},
+ {"surely",1},
+ {"are",1},
+ {"she",3},
+ {"shells",3},
+ {"seashore",3},
+ {"the",3},
+ {"by",1},
+ {"seashells",2},
+ {"sells",4},
+ {"She",1}]
+
+~~~
+
+
+=================================
+ 
+#Extra#2 spawn_monitor:  monitor the reducers restarting them every time they die, making sure to send the worker the updated list of reducers Pid / the updated Pid if you made just one. Modify the reducer/reducers to exit with reason "I am bored" if you send them a nothing_to_do message.  (comment the kill in the master to test it)
+
+%%%%%%%%%%%%#E2 
+~~~
+mapReduce(integer(),string()) -> list(tuple(string(),integer()))
+~~~
+
+Test execution:
+-----------
+
+**Do not forget to change the name of the module!**
+
+~~~
+
+>test:mapReduce(3,2,"She sells seashells by the seashore \n the shells she sells are surely seashells \n so if she sells  shells on the seashore \n I'm sure she sells seashore shells").
+
+Sent: "She sells seashells by the seashore " to <0.89.0>   
+Sent: " the shells she sells are surely seashells " to <0.91.0>   
+Sent: " so if she sells  shells on the seashore " to <0.91.0>   
+Sent: " I'm sure she sells seashore shells" to <0.89.0>   
+Done <0.87.0>!
+[{"sure",1},
+ {"I'm",1},
+ {"on",1},
+ {"if",1},
+ {"so",1},
+ {"surely",1},
+ {"are",1},
+ {"she",3},
+ {"shells",3},
+ {"seashore",3},
+ {"the",3},
+ {"by",1},
+ {"seashells",2},
+ {"sells",4},
+ {"She",1}]
+
+> test:nothig().
+Sent: nothing_to_do to <0.87.0>
+<0.87.0> exited with reason I am bored
+started new reducer <0.92.0> 
+~~~
+
+
+=================================
+
+#Extra#3 textEditor:  create a function textEditor(Eot), that takes a specific string as end of text. It continusly get lines from the shell and store them as text. If Eot is entered,  it spawns a mapReduce submitting the whole text.  
+
+%%%%%%%%%%%%#E3  
+~~~
+mapReduce(integer(),string()) -> list(tuple(string(),integer()))
+~~~
+
+Test execution:
+-----------
+
+**Do not forget to change the name of the module!**
+
+~~~
+
+test:textEditor("#eot").
+-->She sells seashells by the seashore 
+-->the shells she sells are surely seashells
+-->so if she sells  shells on the seashore
+-->I'm sure she sells seashore shells
+-->#eot
+processing....
+
+(the rest goes like the previous examples)
+~~~
