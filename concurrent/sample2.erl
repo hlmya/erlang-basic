@@ -68,7 +68,20 @@ worker()->
 			io:format("Sorted list ~p~n",[lists:merge(List)]),
 			worker()
 	end.
-	
+% Model:
+% master -> 
+% 1. spawn workers and send request sort to worker
+% 2. spawn dispatcher
+% 3. receive final result from dispatcher
+
+% worker ->
+% 1. receive and request sort or merge, then send result to dispatcher
+
+% dispatcher ->
+% 1. receive sorted or merged lists from workers and handling them
+% 2. send the final result to master
+
+% test master
 % 3> sample2:master(3,[1,2,3,4,54,3,1,2,6,77,8,0]).
 % Sent: [1,2,3,4] to <0.82.0>
 % Sorted list [1,2,3,4]
@@ -79,5 +92,8 @@ worker()->
 % Sent: [6,77,8,0] to <0.84.0>
 % Sorted list [0,6,8,77]
 % Sorted list [1,1,2,2,3,3,4,54]
-% => 2 worker processes try to send msg at a same time to dispatcher, how to solve it?
+% ... compiler stops here
+% => 2 worker processes (Sorted list [0,6,8,77]) and (Sorted list [1,1,2,2,3,3,4,54]) try to send msg at a same time to the dispatcher
+% => cause conflicts, I think
+% => How to solve it?
 
