@@ -36,6 +36,7 @@ worker()->
 	receive {PidD,Fun,Args}-> 
 			%io:format("~p ~p   ~p  \n",[self(),Fun,Args]),
 			PidD! {self(),apply(Fun,Args)},
+			io:format("Work handle ~p~n", [apply(Fun,Args)]),
 			worker()
 			after 10000 ->io:format("Suicide! ~p  \n",[self()]), exit("unused")
 	end. 
@@ -72,7 +73,10 @@ master(N,L)->
 				 	
 dispatcher(Pids,ListsL,[]) ->
 	receive 
-			{_,Res}-> dispatcher(Pids,ListsL,[Res]) 
+			{_,Res}-> 
+				io:format("Dispatcher start again: ~p~n",[[Res]]),
+				dispatcher(Pids,ListsL,[Res])
+				
 	end;
 						
 %% case end of processing	eg  [3,4,2,1] ---> Result=[[1,2,3,4]] 	 						
@@ -94,7 +98,7 @@ dispatcher(Pids,ListsL,Result) ->
 					dispatcher([Pid|Pids],ListsL,Result);
 		{Pid,Res}->
 				NR=[Res|Result],
-				%io:format("Dispatcher processing: ~p  \n",[NR]),
+				io:format("Dispatcher processing: ~p  \n",[NR]),
 				[NR1,NR2|NRT]=NR,
 				Pid! {self(), fun lists:merge/2,[NR1,NR2]},
 				dispatcher(Pids,ListsL,NRT)

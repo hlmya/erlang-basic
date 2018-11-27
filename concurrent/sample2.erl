@@ -1,7 +1,7 @@
 -module(sample2).
--compile(export_all).
+-compile([export_all]).
 
-% test:master(3,[1,2,3,4,54,3,1,2,6,77,8,0]).
+% sample2:master(3,[1,2,3,4,54,3,1,2,6,77,8,0]).
 % Sent: [1,2,3,4] to <0.62.0>   
 % Sent: [54,3,1,2] to <0.63.0>   
 % Sent: [6,77,8,0] to <0.64.0>   
@@ -15,58 +15,72 @@ split(L,_,1)-> [L];
 split(L,Len,N)-> LN=lists:sublist(L,Len),[LN]++split(L--LN,Len,N-1).
 
 master(N,L) ->
-	MasterPid = self(),
+	MasterPid = whereis(master),
+	case MasterPid of
+		undefined -> ok;
+		_ -> unregister(master)
+	end,
+	register(master,self()),
+	
+	process_flag(trap_exit, true),
+	
 	SplitLists = split(L,N),
-	WorkerPids = lists:map(fun(_) -> spawn(fun() -> worker() end) end, lists:seq(1,N)),
-	DispatcherPid = spawn(fun()-> dispatcher(MasterPid, length(L), []) end),
+	WorkerPids = lists:map(fun(_) -> spawn_link(fun() -> worker() end) end, lists:seq(1,N)),
+	DispatcherPid = spawn_link(fun()-> dispatcher(WorkerPids, length(L), []) end),
 	sendandprintout(WorkerPids, SplitLists,DispatcherPid),
 	receive
-		{ok, DispatcherPid, Result} -> 
+		{ok, DispatcherPid, Result} ->
 			end_work([DispatcherPid|WorkerPids]),
-			Result
-			
+			Result	
 	end.
 
 sendandprintout([],[],_) -> ok;
 sendandprintout([Hpid|Tpid], [X|Y], DispatcherPid) ->
-	Hpid ! {DispatcherPid, sort, X},
+	Hpid ! {DispatcherPid, fun lists:sort/1, X},
 	io:format("Sent: ~p to ~p~n",[X, Hpid]),
 	sendandprintout(Tpid,Y,DispatcherPid).
 
 end_work(Pids) ->
 	lists:foreach(fun(X) -> exit(X,kill) end, Pids),
-	io:format("Work done~n",[]).
+	io:format("Work done ~p ~n",[Pids]).
 
-dispatcher(MasterPid, N, Acc)->
+dispatcher(WorkerPids, N, Acc)->
+	MasterPid = whereis(master),
 	receive
+		{'EXIT', PidW, "unused"} ->
+				PidWorker = spawn_link(?MODULE, worker, []),
+				io:format("Start: ~p~n",[PidW]),
+				dispatcher([PidW|WorkerPids], N, Acc);
 		{WorkerPid, Result} ->
 			case length(Result) == N of
 				true -> 
 					MasterPid ! {ok, self(), Result},
 					io:format("Sent final result to Master~n");
 				false ->
-					UpdatedResult = [Result | Acc],
+					UpdatedResult = [Result | Acc], % Acc should be Acc or 1 element
 					io:format("UpdatedResult: ~p~n",[UpdatedResult]),
-					case length(UpdatedResult)  >= 2 of
+					case length(UpdatedResult)  == 2 of
 						true -> 
-							WorkerPid ! {self(), merge, UpdatedResult},
-							dispatcher(MasterPid, N, UpdatedResult);
+							WorkerPid ! {self(), fun lists:merge/1, UpdatedResult},
+							dispatcher(MasterPid, N, []); % reset Acc is important
 						false -> dispatcher(MasterPid, N, UpdatedResult)
 					end
 			end
+		
 	end.
 
 % receive F and List and then return the result after apply Function
 worker()->
 	receive
-		{PidD, sort, List} -> 
-			PidD ! {self(),lists:sort(List)},
-			io:format("Sorted list ~p~n",[lists:sort(List)]),
-			worker();
-		{PidD, merge, List} -> 
-			PidD ! {self(),lists:merge(List)},
-			io:format("Sorted list ~p~n",[lists:merge(List)]),
+		{PidD, F, List} -> 
+			AppliedF = apply(F,[List]),
+			PidD ! {self(),AppliedF},
+			io:format("Sorted list ~p~n", [AppliedF]),
 			worker()
+	after
+		10000 ->
+			io:format("Suicide ~p~n",[self()]), 
+			exit(self(),"unused")
 	end.
 % Model:
 % master -> 
@@ -80,3 +94,22 @@ worker()->
 % dispatcher ->
 % 1. receive sorted or merged lists from workers and handling them
 % 2. send the final result to master
+
+% dispatcher(MasterPid, N, Acc)->
+	% receive
+		% {WorkerPid, Result} ->
+			% case length(Result) == N of
+				% true -> 
+					% MasterPid ! {ok, self(), Result},
+					% io:format("Sent final result to Master~n");
+				% false ->
+					% UpdatedResult = [Result | Acc],
+					% io:format("UpdatedResult: ~p~n",[UpdatedResult]),
+					% case length(UpdatedResult)  >= 2 of
+						% true -> 
+							% WorkerPid ! {self(), fun lists:merge/1, UpdatedResult},
+							% dispatcher(MasterPid, N, UpdatedResult);
+						% false -> dispatcher(MasterPid, N, UpdatedResult)
+					% end
+			% end
+	% end.
