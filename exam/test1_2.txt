@@ -1,0 +1,83 @@
+Please take into account the followings:
+
+do not use list comprehensions
+do not use if expressions
+you may use library functions, but minimum one solution has to be implemented as a recursive function
+using class materials, additional Erlang files, any source from the internet are not allowed!
+Task no. 0:
+Copy the following declaration form to your Erlang file and fill in the required data:
+
+%% <Name>
+%% <Neptun ID>
+%% <DDS, Retake 1>
+%% <7.11.2018.>
+%% This solution was submitted and prepared by <Name, Neptun ID> for the DDS Retake Test Sequential.
+%% I declare that this solution is my own work.
+%% I have not copied or used third-party solutions.
+%% I have not passed my solution to my classmates, neither made it public.
+%% Students’ regulation of Eötvös Loránd University (ELTE Regulations Vol. II. 74/C. § ) states that as long as a student presents another student’s work - or at least the significant part of it - as his/her own performance, it will count as a disciplinary fault. The most serious consequence of a disciplinary fault can be a dismissal of the student from the University.
+The link of the documentation.
+Task no. 1: Merging sorted lists
+Define a recursive function merge/2 that takes two already sorted lists L1 and L2 as arguments. The function returns a sorted list containing all the elements of L1 and L2.
+
+merge(L1::list(any()), L2::list(any())) -> Result::list(any())
+Test cases:
+Do not forget to change the name of the module!
+
+retake:merge([1,3], [2]) == [1,2,3]
+retake:merge([1,3], [2,2]) == [1,2,2,3]
+retake:merge([1,2,3], [2,2]) == [1,2,2,2,3]
+retake:merge([1,2,3], [1,2,2,4,5,6]) == [1,1,2,2,2,3,4,5,6]
+retake:merge([1,2,3], []) == [1,2,3]
+retake:merge([], [3]) == [3]
+retake:merge([1,2,3], [4,5,6]) == [1,2,3,4,5,6]
+retake:merge([1,1,2,3], [2,3,4]) == [1,1,2,2,3,4]
+Task no. 2: Chunking a list
+Define a function chunk/2 that takes two arguments: a list L and a positive integer value N. The function chunks the list into sublists that has a length N. When the length of the original argument list (L) is not divisible by N, the last chunk will contain fewer elements than N.
+
+chunk(L::list(), N::positive_integer()) -> Result::list()
+Test cases:
+Do not forget to change the name of the module!
+
+retake:chunk([1,2,3], 1) == [[1],[2],[3]]
+retake:chunk([1,2,3], 2) == [[1,2],[3]]
+retake:chunk([1,2,3], 3) == [[1,2,3]]
+retake:chunk([1,2,3], 4) == [[1,2,3]]
+retake:chunk([1,2,3,4,5], 2) == [[1,2],[3,4],[5]]
+retake:chunk([], 2) == []
+Task no. 3: Updating values in a map
+Define a function update_value/3 that takes three arguments: List is a list of Key and Function pairs, Init is an arbitrary value, and Map is map containing values associated to keys.
+
+The function selects an element from the list (a Key and Function pair), searches the Value associated with Key in the Map and updates the Value using the function F. If the Key is not found, then we add a new field to the Map with the Key and the initial value Init.
+
+update_values(List::list(tuple(term(), fun())), Init::term(), Map::map()) -> Result::map()
+Test cases:
+Do not forget to change the name of the module!
+
+retake:update_values([{melinda,fun(X) -> 10*X end}], 1000, #{melinda=>12, anna=>24}) == #{anna => 24,melinda => 120}                      
+retake:update_values([], 1000, #{melinda=>12, anna=>24}) == #{anna => 24,melinda => 12}
+retake:update_values([{melinda,fun(X) -> 10*X end} ,{ anna, fun(X) -> 100*X end}], 1000, #{melinda=>12, anna=>24}) == #{anna => 2400,melinda => 120}
+retake:update_values([{melinda,fun(X) -> 10*X end} ,{ anna, fun(X) -> 100*X end}, {an, fun(X) -> X end}], 1000, #{melinda=>12, anna=>24}) == #{an => 1000,anna => 2400,melinda => 120}
+Task no. 4: Summing the elements of a list
+Define a function subsum/1 that takes a list as an argument and returns the sum of its sublists. For example subsum([1,2,3]) returns [1, 1+2, 1+2+3]. During the implementation, each addition has to be evaluated only once. So when computing 1+2+3 you should reuse the already calculated value 1+2.
+
+subsum(List::list()) -> Result::list()
+Test cases:
+Do not forget to change the name of the module!
+
+retake:subsum([]) == []
+retake:subsum([1]) == [1]
+retake:subsum([1,2]) == [1,3]
+retake:subsum([1,2,3]) == [1,3,6]
+retake:subsum([1,2,3,4,5,6]) == [1,3,6,10,15,21]
+Task no. 5: Sorting a list using the mergesort algorithm
+Define a function sort/1 using the defined functions merge/2 and chunk/2. The merge based sorting algorithm divides the list to sublists, apply the sorting recursively on the sublists and merges the subresults.
+
+sort(List::list()) -> Result::list()
+Test cases:
+Do not forget to change the name of the module!
+
+retake:sort([1,2,3]) == [1,2,3]
+retake:sort([]) == []
+retake:sort([4,5,2]) == [2,4,5]
+retake:sort([4,2,3,4,5,2]) == [2,2,3,4,4,5]

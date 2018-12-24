@@ -1,0 +1,96 @@
+Please take into account the following:
+
+using class materials, additional Erlang files, any source from the internet are not allowed!
+Task no. 0:
+Copy the following declaration form to your Erlang file and fill in the required data:
+
+%% <Name>
+%% <Neptun ID>
+%% <DDS, TEST2 Retake>
+%% <05.12.2018.>
+%% This solution was submitted and prepared by <Name, Neptun ID> for the DDS Parallel Retake Test.
+%% I declare that this solution is my own work.
+%% I have not copied or used third-party solutions.
+%% I have not passed my solution to my classmates, neither made it public.
+%% Students’ regulation of Eötvös Loránd University (ELTE Regulations Vol. II. 74/C. § ) states that as long as a student presents another student’s work - or at least the significant part of it - as his/her own performance, it will count as a disciplinary fault. The most serious consequence of a disciplinary fault can be a dismissal of the student from the University.
+The link of the documentation.
+Task no. 1: Parallel efficient any
+Define a function pany/2 that takes a predicate function F and a list as arguments. The functions (let us call it as the parent process) spawns an evaluator process and as many worker processes as the number of elements of the list. Each worker process evaluates the predicate function on an element of the list and answers to the evaluator process whether the result of function F is true or false. The evaluator process gathers the result in a lazy way: any received true means the result of the computation is true so it sends the true answer to the parent process. If no true element found in the list (every response was false) it returns false to the parent. The parent process returns either true or false like the sequential lists:any/2 function.
+
+Do not use additional list traversing (filtering on the list of received elements) in the evaluator and nor in the parent process.
+
+Test cases:
+retake2:pany(fun erlang:is_atom/1, [1, 2, 13, 2]) == false
+retake2:pany(fun erlang:is_atom/1, [1, 2, 13, apple]) == true
+retake2:pany(fun erlang:is_atom/1, [1, pear, 13, apple]) == true
+retake2:pany(fun erlang:is_atom/1, [1, pear, 13]) == true
+retake2:pany(fun erlang:is_atom/1, [1, 13]) == false
+retake2:pany(fun erlang:is_atom/1, []) == false
+Task no. 2: Pipeline
+Look into the following definition of the composition function. It takes a list of functions (Funs) and a list of values (Values) as an argument. It takes an element from the Values list and applies all the functions from Funs on the element after each other. For example: let Funs be [F, G, H] and List be [1,2], then the return value is [H(G(F(1))), H(G(F(2)))].
+
+composition(_, []) ->
+	[];
+composition(Funs, [Val | Values]) ->
+	[ composition_single(Funs, Val) | composition(Funs, Values)].
+
+composition_single(Funs, Value) ->
+	lists:foldl(fun(F, Acc) -> F(Acc) end, Value, Funs).
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> X*2 end], [1,13,232,3]) == [4,28,466,8]
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> X+2 end], [1,2,3]) == [4,5,6]
+retake2:pipeline([], [1,2,3]) == [1,2,3]
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> X+2 end], [1,13,232,3]) == [4,16,235,6]
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> 0 end], [1,13,232,3]) == [0,0,0,0]
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> X * 2 end], []) == []
+During the implementation be aware of the following:
+EACH PROCESS ACCEPTS MESSAGES ONLY FROM THE FORMER ELEMENT OF THE RING AND SENDS A MESSAGE TO THE NEXT ELEMENT OF THE RING
+Your task is to implement the parallel equivalent of this function ppipeline/2 in the following way:
+
+let us call the main process to master
+the master spawns as many worker processes as the number of functions in the Funs list
+then the master sets up a communication ring from the worker processes
+in the ring each process accepts messages only from the former element of the ring and sends a message to the next element of the ring
+the master sends all data to the first element of the ring (element by element and not as a whole list) and waits for all computed values arriving back from the last process in the ring (again element by element and not as a single list).
+each spawned worker process waits for data from the former process, evaluates its function, and sends the result to the next function to evaluate
+after these steps the worker process waits for the next message and do the same steps
+Example: if we have the master process P0 and 2 worker processes P1 and P2 then:
+
+P1 accepts messages only from P0, and sends messages to P2
+P2 accepts messages only from P1, and sends messages to P0
+P0 accepts messages only from P2, and sends messages to P1
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> X*2 end], [1,13,232,3]) == [4,28,466,8]
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> X+2 end], [1,2,3]) == [4,5,6]
+retake2:pipeline([], [1,2,3]) == [1,2,3]
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> X+2 end], [1,13,232,3]) == [4,16,235,6]
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> 0 end], [1,13,232,3]) == [0,0,0,0]
+retake2:pipeline([fun(X) -> X+1 end, fun(X) -> X * 2 end], []) == []
+Task no. 3: Statistics
+Gather statistics about the execution of Task 1. Create a function start_stat/0 that spawns a statistics process and registers it, and create a function stop_stat/0 that sends a stop message to the statistics process and wait for the statistics gathered by the process. The response should contain the values that evaluated to true and the values where predicate F evaluated to false and prints them (THE ORDER OF THE ELEMENTS IS NOT IMPORTANT). stop_stat/0 returns a pair, containing the list of true-values and the list of false-values.
+
+Modify the worker processes in a way that they send the calculated values to the statistics process as well. The statistics process waits for the messages from the workers and stores them.
+
+Example run:
+3> retake2:start_stat().
+true
+4> retake2:pany(fun erlang:is_atom/1, [1, pear, 13, apple]) .
+true
+5> retake2:pany(fun erlang:is_atom/1, [1, 13]).
+false
+6> retake2:pany(fun erlang:is_atom/1, [1, 2, 13, 2]). 
+false
+7> retake2:stop_stat().                                      
+True values: [apple,pear]
+False values:[2,13,2,1,13,1,13,1]
+{[apple,pear],[2,13,2,1,13,1,13,1]}
+Task no. 4: Stop the processes
+Extend the implementation of Task 2 in the following way:
+
+once all the results arrived to the master, it sends a stop message to the first process
+then the master waits to the last process to send the stop message
+keep in mind the communication rules when sending the stop message
+each worker has to print a message containing its pid that it is terminating
+Example run:
+3> retake2:ppipeline_stop([fun(X) -> X+1 end, fun(X) -> X*2 end], [1,13,232,3]). 
+ Worker <0.71.0> terminated
+ Worker <0.72.0> terminated
+ [4,28,466,8]

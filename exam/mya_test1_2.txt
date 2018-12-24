@@ -1,0 +1,75 @@
+% <Hoang Le My Anh>
+% <Neptun ID> E1CS55
+% <DDS, Retake 1>
+% <7.11.2018.>
+% This solution was submitted and prepared by <Name, Neptun ID> for the DDS Retake Test Sequential.
+% I declare that this solution is my own work.
+% I have not copied or used third-party solutions.
+% I have not passed my solution to my classmates, neither made it public.
+% Students’ regulation of Eötvös Loránd University (ELTE Regulations Vol. II. 74/C. § ) states that as long as a student presents another student’s work - or at least the significant part of it - as his/her own performance, it will count as a disciplinary fault. The most serious consequence of a disciplinary fault can be a dismissal of the student from the University.
+
+-module(retake).
+-compile(export_all).
+%No.1
+merge(L1,L2) -> merge(L1,L2,[]).
+merge([],[], Acc) -> Acc;
+merge([],Y,Acc) -> Acc ++ Y;
+merge(T,[],Acc) -> Acc ++ T;
+merge(L1,L2,Acc) ->
+	[H|T] = L1,
+	[X|Y] = L2,
+	case H < X of
+		true -> merge(T, L2, Acc ++ [H]);
+		false -> merge(L1,Y, Acc ++ [X])
+	end.
+	
+%No.2
+chunk(L,N) -> chunk(L,N,[]).
+chunk([],_, Acc) -> Acc;
+chunk(L,N,Acc) -> 
+	case N < length(L) of
+		true-> 
+			RemList = lists:sublist(L,N+1,length(L)),
+			TakeList = lists:sublist(L,N),
+			chunk(RemList,N,Acc ++ [TakeList]);
+		false -> 
+			Acc ++ [L]
+	end.
+			
+%No.3
+update_values([],_,Map) -> Map;
+update_values([H|T],Init,Map) ->
+	{Name,F} = H,
+	case Map of
+		#{Name:=OldVal} -> update_values(T,Init,Map#{Name=>F(OldVal)});
+		_ -> update_values(T,Init,Map#{Name => Init})
+	end.
+
+%No.4
+
+subsum(L) -> subsum(L,length(L),[]).
+
+subsum(_,0,Acc) -> lists:reverse(Acc);
+subsum(L,N,Acc) ->
+	TakeList = lists:sublist(L,N),
+	Sum = lists:sum(TakeList),
+	subsum(L,N-1,Acc ++ [Sum]).
+
+%No.5
+sort([]) -> [];
+sort([H]) -> [H];
+sort(L) -> sort(retake:chunk(L,1),[]).
+
+sort([],Acc) -> Acc;
+sort([H|T],Acc) ->
+	sort(T,retake:merge(H,Acc)).
+
+
+====== TEACHER COMMENT
+subsum does not met the requirements. it calculates the sum in each recursive step.
+
+sort is not implemented in the proper order: it merges and then calls recursively itself, however it should do the recursive call and merge after.
+Task 1	Task 2	 Task 3	Task 4	Task5	Sum
+20	20	20	10	10	80
+
+The percentage of the evaluation: 80%

@@ -1,0 +1,147 @@
+Please take into account the following:
+
+using class materials, additional Erlang files, any source from the internet are not allowed!
+Task no. 0:
+Copy the following declaration form to your Erlang file and fill in the required data:
+
+%% <Name>
+%% <Neptun ID>
+%% <DDS, TEST4>
+%% <12.12.2018.>
+%% This solution was submitted and prepared by <Name, Neptun ID> for the DDS Distributed Test.
+%% I declare that this solution is my own work.
+%% I have not copied or used third-party solutions.
+%% I have not passed my solution to my classmates, neither made it public.
+%% Students’ regulation of Eötvös Loránd University (ELTE Regulations Vol. II. 74/C. § ) states that as long as a student presents another student’s work - or at least the significant part of it - as his/her own performance, it will count as a disciplinary fault. The most serious consequence of a disciplinary fault can be a dismissal of the student from the University.
+The link of the documentation.
+Task no. 1: Job server
+Your task today is to define a distributed job server. The job server's interface offers a start/1 function as a server interface and a run/3 function as a client interface. The start/1 function starts the server and registers it. Its argument is a natural number that is used to mark the number of workers to start. The server has to start as many processes as this number. These processes will be the workers of the server who will evaluate the clients' requests. The workers notify the server loop that they are free to compute something, then wait for jobs and send the calculated values back to the server.
+
+The server state should contain the process ids of the worker processes and the jobs requested by the clients.
+
+The server handles the following messages:
+
+job: a function arrives that need to be evaluated, the server acknowledges the request (answers with a message) and then put the job in the job queue,
+free: a worker notifies the server that it is free to work, so if there is a new job in the job queue than the server gives it to the worker,
+value: a calculated value arrives back from a worker, so it has to be forwarded to the requestor
+The run function has three arguments: a module name, a function name and a list of arguments. The run function sends a job request to the job server and waits for an acknowledgment arriving back from the server. After receiving the acknowledgment it prints: " Job accepted". If no ack arrives in 10 seconds, it returns "Server busy". If the acknowledgment arrives it wait for the result of the computation and returns with the value.
+
+The end of the page you find the client module. You can use it to test your application.
+
+Example:
+(srv@localhost)11> test3:start(2).
+true
+
+(client@localhost)10> client:start().  
+Module name: lists.
+Function name: max.
+Give me an argument: [234,456,5678,678].
+Job accepted 
+Result of a former job ({lists,max,[[234,456,5678,678]]}): 5678
+Module name: lists.
+Function name: nth.
+Give me an argument: 2.
+Give me an argument: [apple, pear, apple].
+Job accepted 
+Result of a former job ({lists,nth,[2,[apple,pear,apple]]}): pear]
+Module name: 
+Example of the busy server:
+(srv@localhost)11> test3:start(2).
+true
+
+(client@localhost)10> client:start().  
+Module name: lists.
+Function name: max.
+Give me an argument: [234,456,5678,678].
+Result of a former job ({lists,max,[[234]]}): "Server busy"
+Module name: 
+Task no. 1.5: Safe communication
+The commpunication has to be safe: use references (make_ref()) in the messages to identify the requests. It can be used as an identifier of the request as well.
+
+Task no. 2: Stopping the server
+Implement a stop/0 function to stop the server. In the stop/0 function, you have to send a termination message to the server. When this message arrives to the server (a new receive branch has to be added to the server loop) it won't call its loop function, prints that the job server is terminating, and sends messages to the workers to make them stop as well. Each worker prints a message that it is terminated: "Worker terminated: <0.154.0>". The server also notifies the owners of the not finished jobs that there will be no reply to the request. Modify the run function as well to handle the no-reply messages: the run function/process should notify the client about the non-arriving result for the requested computation.
+
+Example:
+(srv@localhost)12> test3:stop().  
+Job handler terminated
+Worker terminated: <0.102.0>
+Worker terminated: <0.103.0>
+stop
+Example of worker notification:
+(client@localhost)10> client:start().  
+Module name: timer.
+Function name: sleep.
+Give me an argument: 20000.
+Job accepted
+Result of a former job ({lists,max,[[234]]}): noreply
+Module name: 
+Task no. 3: Suprevising workers
+The worker processes might terminate unexpectedly if there is a runtime error in the evaluation of the function. Make the server aware of this: supervise the workers (add a new branch to the server loop) and restart the failing worker if some of them failed. Also, send a no-reply message to the client.
+
+Example:
+(client@localhost)10> client:start().  
+Module name: lists.
+Function name: max.
+Give me an argument: {}.
+Job accepted
+Result of a former job ({lists,max,[[234]]}): noreply
+Module name: 
+
+(srv@localhost)15>
+Worker terminated unexpectedly: <0.107.0>
+Restarting it...
+Task 4:
+Submit an example run.
+
+Client code
+-module(client).
+-export([start/0]).
+
+start()  ->
+	Loop = self(),
+	spawn(fun() -> io(Loop) end),
+	loop().
+	
+io(Loop) ->
+	case eval() of
+		{M, F, A} = Triple -> 
+			Loop ! {eval, Triple},
+			io(Loop);
+		String -> 
+			Loop ! {error, String}
+	end.
+		
+loop() ->
+	receive
+		{error, String} -> 
+			"Cleint stopped with reason: " ++ String;
+		{eval, {M, F, A}} ->
+			Pid = self(),
+			spawn(fun() -> Pid ! {result, {M, F, A}, test3:run(M, F, A) } end),
+			loop();
+		{result, Job, Res} ->
+			io:format("Result of a former job (~p): ~p~n", [Job, Res]),
+			loop()
+	end.
+
+eval() ->
+	try 
+		{ok, Mod} = io:read("Module name: "),
+		Exported = Mod:module_info(exports),
+		{ok, Fun} = io:read("Function name: "),
+		{Fun, Arity} = lists:keyfind(Fun, 1, Exported),
+		Arguments =
+			lists:map(fun(_) -> 
+						{ok, Par} = io:read("Give me an argument: "),
+						Par
+					end, lists:seq(1, Arity)),
+		{Mod, Fun, Arguments}
+	of 
+		Triple -> Triple
+	catch
+		error:{badmatch, false} -> "Function does not exist";
+		_:{badmatch, _} -> "Bad term";
+		_:undef -> "Module does not exist";
+		_:badarg -> "Not an atom as a module name";
+		_:_ -> "Unknown error"
+	end.

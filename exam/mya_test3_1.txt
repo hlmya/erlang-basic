@@ -1,0 +1,112 @@
+-module(test3).
+-compile(export_all).
+
+% cd("C:/Users/e1cs55/Desktop/test").
+
+% C:\Program Files\erl10.0.1\bin>erl -name srv
+% (srv@loviw036.inf.elte.hu)1> cd("C:\Users\e1cs55\Desktop\test").
+% c:/Program Files/erl10.0.1/bin
+% ok
+% (mya@loviw036.inf.elte.hu)2>
+
+%% <Name> Hoang Le My Anh
+%% <Neptun ID> E1CS55
+%% <DDS, TEST4>
+%% <12.12.2018.>
+%% This solution was submitted and prepared by <Name, Neptun ID> for the DDS Distributed Test.
+%% I declare that this solution is my own work.
+%% I have not copied or used third-party solutions.
+%% I have not passed my solution to my classmates, neither made it public.
+%% Students’ regulation of Eötvös Loránd University (ELTE Regulations Vol. II. 74/C. § ) states that as long as a student presents another student’s work - or at least the significant part of it - as his/her own performance, it will count as a disciplinary fault. The most serious consequence of a disciplinary fault can be a dismissal of the student from the University.
+
+% Client interface
+run(M,F,Args) ->
+	global:register_name(run,self()),
+	global:send(server,{job,self(),M,F,Args, make_ref()}),
+	receive
+		{received_job, _Ref} ->
+			"Job Accepted", 
+			run(M,F,Args);
+		no_reply -> 
+			noreply;
+		{final_result,Result} -> 
+			Result
+	after 10000 -> "Server busy"
+	end.
+
+
+% Server interface
+start(N) ->
+	process_flag(trap_exit,true),
+	Workers = lists:map(fun(_) -> spawn_link(fun()-> worker() end) end, lists:seq(1,N)),
+	global:register_name(server,spawn(fun() -> loop([],Workers) end)).
+stop() ->
+	global:send(server,stop).
+	
+loop(Jobs,Workers) ->
+	receive
+		stop -> 
+			%run ! no_reply,
+			global:send(run,no_reply),
+			io:format("Job handler terminated~n"),
+			lists:map(fun(X) ->  X ! {srv_stop,X}, io:format("Worker terminated: ~p~n",[X]) end, Workers);
+			
+		{'EXIT', WPid, _Reason} ->
+			%run ! no_reply,
+			io:format("Worker terminated unexpectedly:~p~n",[WPid]),
+			global:send(run,no_reply),
+			NewPid = spawn_link(fun() -> worker() end),
+			io:format("Restarting it...~n",[WPid]),
+			UpdateWorkers = [NewPid | lists:delete(WPid,Workers)],
+			case lists:keyfind(WPid,1,Jobs) of
+				false ->
+					loop(Jobs,UpdateWorkers);
+				{WPid,Cpid,M,F,Args,Refe} -> 
+					UpdateJobs = lists:keyreplace(WPid,1,Jobs,{notdone,Cpid,M,F,Args,Refe}),
+					loop(UpdateJobs,UpdateWorkers)
+			end;
+			
+		{job,Cpid,M,F,Args, Ref} ->
+			Cpid ! {received_job, Ref},
+			UpdateJobs = Jobs ++ [{notdone,Cpid,M,F,Args, make_ref()}],
+			loop(UpdateJobs,Workers);
+		{free, WPid, Ref} -> 
+			case lists:keyfind(notdone, 1, Jobs) of
+				false -> 
+					WPid ! {nothing_todo, Ref},
+					loop(Jobs,Workers);
+				{notdone,Cpid,M,F,Args,Refe} -> 
+					WPid ! {do,M,F,Args, Ref},
+					UpdateJobs = lists:keyreplace(notdone,1,Jobs,{WPid,Cpid,M,F,Args,Refe}),
+					loop(UpdateJobs,Workers)
+			end;
+		{value,WPid,Result,_Ref} ->
+			{_,Cpid,_,_,_,_} = lists:keyfind(WPid,1,Jobs),
+			io:format("loop received final_result ~p~n",[Result]),
+			Cpid ! {final_result,Result}
+	end.
+
+worker() ->
+	global:send(server,{free, self(), make_ref()}),
+	receive
+		{do,M,F,Args, _Ref} ->
+			%global:send(server,{value,self(),apply(M,F,Args)}),
+			server ! {value,self(),apply(M,F,Args), make_ref()},
+			io:format("Worker completed ~p~n",[apply(M,F,Args)]),
+			worker();
+		{nothing_todo, _Ref} ->
+			worker();
+		{srv_stop,WPid} ->
+			io:format("Worker terminated: ~p~n",[WPid])
+	end.
+
+
+
+======TEACHER COMMENT
+- there has a timing issue in the worker when you start them, the server is not registered, so they immediately fail
+- server ! ... is not working in the worker
+- registering run is a mistake
+- acknowledgments are not handled
+- references are not handled properly
+- no loop call in the value branch
+- linking and EXIT signal handling is not working, the process flag is in a wrong place

@@ -34,6 +34,11 @@ split(N, List1) -> {List2, List3}
 ======================
 cd("G:/02_MSc/14_DesignOfDistributedSys_Erlang/pr/concurrent").
 
+cd("G:/02_MSc/14_DesignOfDistributedSys_Erlang/pr/distributed").
+
+erl -name server@192.168.1.72
+erl -name client@192.168.1.72
+
 
 
 

@@ -1,0 +1,86 @@
+%% <Name> Hoang Le My Anh
+%% <Neptun ID> E1CS55
+%% <DDS, TEST2>
+%% <28.11.2018.>
+%% This solution was submitted and prepared by <Name, Neptun ID> for the DDS Parallel Test.
+%% I declare that this solution is my own work.
+%% I have not copied or used third-party solutions.
+%% I have not passed my solution to my classmates, neither made it public.
+%% Students’ regulation of Eötvös Loránd University (ELTE Regulations Vol. II. 74/C. § )
+%% states that as long as a student presents another student’s work - or 
+%% at least the significant part of it - as his/her own performance, 
+%% it will count as a disciplinary fault. 
+%% The most serious consequence of a disciplinary fault can be a dismissal of the student from the University.
+% cd("C:/Users/e1cs55/Desktop/mya").
+-module(test2).
+-compile(export_all).
+
+% No.1
+pfilter(Pred, List) ->
+	MyPid = self(),
+	lists:map(fun(X) -> spawn(fun() -> MyPid ! {self(),X,Pred(X)} end) end, List),
+	GC = spawn(fun() -> garbagecollector([]) end),
+	pfilter(Pred, List, [], GC).
+	
+pfilter(_, [], Acc, _) ->  Acc;
+pfilter(Pred, [_H|T], Acc, GC) ->
+	receive
+		{_Pid, X, Check} ->
+			case Check of
+				true -> pfilter(Pred, T, Acc ++ [X], GC);
+				false -> 
+					GC ! {false, X},
+					pfilter(Pred, T, Acc, GC)
+			end
+	end.
+% No.4
+garbagecollector(Acc) ->
+	receive
+		{false, X} ->
+			Collect = [X|Acc],
+			io:format("Garbage collector ~p~n", [Collect]),
+			garbagecollector(Collect)
+	end.
+
+% No.2
+pcomposition(Funs, Values) -> pcomposition(Funs, Values,[], length(Values)).
+
+pcomposition(_, _, Acc, 0) -> Acc;
+pcomposition(Funs, Values, Acc, N) ->
+	MyPid = self(),
+	Last = lists:foldl(fun(_, NextPid) -> spawn(fun() -> pcomposition_single(MyPid,NextPid,Funs) end) end, MyPid, Funs),
+	io:format("Check last~p~n", [Last]),
+	lists:map(fun(X) -> Last ! {forward, X} end, Values)
+	receive
+		{ok, Result} ->
+			[Result | Acc],
+			pcomposition(Funs, Values, [Result | Acc], N - 1)
+	end.
+	
+	
+pcomposition_single(MasterPid, _NextPid, []) ->
+	receive
+		{forward, FinalResult} ->
+			MasterPid ! {ok, FinalResult},
+			io:format("Sent to final~p~n", [FinalResult])
+	end;
+	
+
+pcomposition_single(MasterPid, NextPid, [F|Rest]) ->
+	receive
+		{forward, Result} ->
+			NextPid ! {forward, F(Result)},
+			io:format("F(Result)~p~n", [F(Result)]),
+			pcomposition_single(MasterPid, NextPid, Rest)
+	end.
+
+
+====== TEACHER COMMENT
+Task2:
+- The pcomposition recursive call is not a good idea since you restart the whole composition ring again. The receive should be placed into a separate recursive function. 
+- in pcomposition single each process has to do the same operation and not altering the applied function by the recursion
+
+Task 1	Task 2	 Task 3	Task 4	Sum
+35	25	0	10	70
+
+The percentage of the evaluation: 70%

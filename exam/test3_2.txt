@@ -1,0 +1,153 @@
+Drug cartel
+In this exercise, we are going to model a drug cartel organization. A cartel has a warehouse where drugs are stored. The warehouse has a guard who lets in everyone who knows the password. There is a patrolling unit around the warehouse who is checking police officers nearby. Sometimes police officers show up. If police officers are notified in time the patrol unit alerts the guard, who has the list of members and alerts the members inside the warehouse. If the police officers are well trained and are not noticed by the patrol unit they arrest the guard and try to arrest the members inside the warehouse as well. The guard and the patrol of the warehouse have to be started on the node wh@host. The police officer has to be started on the node po@host. To test your implementation you can start a few bad_guys on the same node, for example, bg@host. However nodes wh and po can be used as well for additional testing. process registration can be either local or global.
+
+The example run has to be submitted as well!
+
+Interface functions
+Opening the warehouse
+Define the function warehouse/1 that gets a Password argument that will be used for letting in the bad guys to the warehouse.
+
+The function spawns a guard process, passes the Password to the guard as an argument and registers the process as guard.
+
+The function spawns a patrolling process as well, the argument of the patrol function will be a random number within range 1 and 2000.
+
+It prints some text (eg. "The guard and the patrol is posting!") indicating that the guard is at his post and the patrolling unit is active.
+
+Entering new bad guy to the warehouse
+Define the function new_bad_guy/1 that gets a password Password that will be used to try to enter the warehouse.
+
+The function spawns a bad_guy process, it passes the Password and a random integer value (range: 1-2000) to the function as arguments.
+
+Attempt an ambush
+Define the function officer_unit/1 that gets an arbitrary integer value GraceTime (in milliseconds) that is the grace time (waiting time) before attempting the ambush.
+
+It spawns an officer process, passes it the GraceTime as an argument and registers the process as officer.
+
+Suggested process structure
+The guard
+The state of the guard process should store both the list of bad guys who are currently in the warehouse, and the password to enter. The function continuously receives messages until it is alerted by the patrol process or the police officers show up.
+
+The task of the guard:
+
+let a bad_guy in: If the password of the bad guy matches, the guard lets in the member (notifies the bad guy that he is allowed to come in) and prints some text (eg. "Guard: The password is fine, come in <0.173.0>!"). Otherwise, it sends go_away and prints some text (eg. "The password is bad, better leave <0.180.0> before I ...!").
+
+listen to the patrolling unit: when it is notified that an officer is close, the guard has to notify the members inside the warehouse, print some text (eg. "Guard: Members notified. I am leaving!") and leave.
+
+wait to be caught by the officer: if the police officer sends a catch message (so the police officers has sneaked to the door) the guard's acts:
+
+Shouts out loud that the police officers are at the door. The shouting means: it selects randomly (use random:uniform/1) a member in the warehouse and sends him/her the {raid, Members} message, where Members describes who is inside the warehouse. If the members are fast enough they can leave the warehouse through the secret back door. It prints some text (eg. "Guard: Cops are here, raid!") and
+
+Passes the list of members to the officers, prints some text (eg. "Guard: I have been arrested! The cops have acquired the list!") and terminates.
+
+Patrol unit
+The patrols loop takes an integer value PatrollingIntervall in milliseconds as an argument.
+
+To define this functionality you can either use the timer:apply_interval/4 function, or define a recursive function.
+
+The patrolling unit does the following things:
+
+It sleeps PatrollingIntervall milliseconds,
+
+If there is a process registered with name officer (that means a police unit is nearby)
+
+If the guard is still at his post (the process is alive), it alerts him and prints some message (eg. "Patrol: I have noticed the cops!~n")
+
+If the guard is not at his post the patrol prints some text and terminate (eg."Patrol: Guard has left its post. Probably cops are near, I am leaving too!")
+
+If there is no process registered with officer it prints some text (eg. "Patrol: There are no cops near the warehouse!") and continues with patrolling within the given intervals.
+
+Bad guys
+The bad guy processes take the password as an argument and an integer value WorstReactionTime that is his worst reaction time in milliseconds. The function tries to join to the warehouse az first. If the guard denies the join to the warehouse, the function prints some string (like "OK, I am leaving!"). If the guard is not responding within 2 seconds, it simply returns. If the guard let him in, then it does the following steps recursively:
+
+randomly generates a number N within a range 1 and WorstReactionTime and sleeps N milliseconds (hint: use timer:sleep/1),
+
+Tries to receive a message from the mailbox. If there is no message it immediately returns to the first step. The messages can be the following:
+
+{raid, Members} : This message comes from the guard (when it is arrested and it shouts out loud). The process has to notify the other members with an ambush message. It prints some text (eg. "<0.171.0>: I have notified everyone, now I am leaving!") and returns.
+
+The notification about the ambush: the process prints some text (eg. "<0.156.0>: Cops are near, I am leaving!") and returns.
+
+an arrested message from the officer: It prints some text (eg. "<0.173.0>: I surrender, I will not fight back!"), and sends to the officer unit the {surrender, MyPid} message and returns.
+
+The good guys
+The officer process takes an integer value GracePeriod waiting time milliseconds that is the time before trying the ambush. The officer does the following:
+
+Generates a random integer value N within the range 1 and GracePeriod and sleeps for N milliseconds.
+
+If the guard has left its post (he had been alerted by the patrol unit) the officer prints some text (eg. "Officer: We are late, everyone has left!")
+
+If the guard is at his post (the patrol unit had not alerted him) the ambush starts. The officer sends to the guard the a message that he arrived and waits for the list of members of the warehouse.
+
+If the message does not arrive within 1 second (the guard has sneaked away), the officer prints some text (eg. "Officer: They have noticed us!:( No one had been arrested!")
+
+If the message is received, it sends the arrested messages to the members in the warehouse and tries to receive as many {surrender, Pid} messages as possible. If there are no new messages within 2 seconds it prints the received process identifiers. (eg. Patrol: Guard has left its post. Probably cops are near, I am leaving too! Officer: The guard has been arrested and the following members as well: [<0.173.0>, <0.169.0>] )
+
+Example scenarios:
+Scenario no. 1
+1> drug_cartel:warehouse(apple), drug_cartel:new_bad_guy(apple),drug_cartel:new_bad_guy(pear), drug_cartel:new_bad_guy(apple), drug_cartel:new_bad_guy(apple).
+The guard and the patrol is posting!
+Guard: The password is fine, come in <0.42.0>!
+<0.45.0>
+Guard: The password is bad, better leave <0.43.0> before I ...!
+<0.42.0>: I am in!
+Guard: The password is fine, come in <0.44.0>!
+<0.43.0>: OK, I am leaving!
+Guard: The password is fine, come in <0.45.0>!
+<0.44.0>: I am in!
+<0.45.0>: I am in!
+Patrol: There are no cops near the warehouse!
+Patrol: There are no cops near the warehouse!
+Patrol: There are no cops near the warehouse!
+2> drug_cartel:officer_unit(1000).
+true
+Patrol: I have noticed the cops!
+Guard: Members notified. I am leaving!
+Officer: We are late, everyone has left!
+<0.42.0>: Cops are near, I am leaving!
+<0.45.0>: Cops are near, I am leaving!
+<0.44.0>: Cops are near, I am leaving!
+Scenario no. 1
+1> drug_cartel:warehouse(apple), drug_cartel:new_bad_guy(apple), drug_cartel:new_bad_guy(apple), drug_cartel:new_bad_guy(apple).                              
+The guard and the patrol is posting!
+Guard: The password is fine, come in <0.37.0>!
+<0.39.0>
+Guard: The password is fine, come in <0.38.0>!
+<0.37.0>: I am in!
+Guard: The password is fine, come in <0.39.0>!
+<0.38.0>: I am in!
+<0.39.0>: I am in!
+Patrol: There are no cops near the warehouse!
+Patrol: There are no cops near the warehouse!
+Patrol: There are no cops near the warehouse!
+Patrol: There are no cops near the warehouse!
+Patrol: There are no cops near the warehouse!
+Patrol: There are no cops near the warehouse!
+Patrol: There are no cops near the warehouse!
+Patrol: There are no cops near the warehouse!
+2> drug_cartel:officer_unit(100).
+true
+Guard: Cops are here, raid!
+Guard: I have been arrested! The cops has acquired the list! 
+<0.39.0>: I surrender, I will not fight back!
+Patrol: Guard has left its post. Probably cops are near, I am leaving too!
+<0.38.0>: I have notified everyone, now I am leaving!
+<0.37.0>: I surrender, I will not fight back!
+Officer: The guard has been arrested and the following members as well: [<0.37.0>,
+                                                                         <0.39.0>]
+Checking locally registered processes on an other node:
+
+(srv@localhost)26> register(apple, self()).
+true
+
+(a@localhost)71> Pid = self().
+<0.363.0>
+(a@localhost)72> spawn( srv@localhost, fun() -> Pid ! whereis(apple) end).
+<7801.135.0>
+(a@localhost)73> flush().
+Shell got <7801.66.0>
+ok
+(a@localhost)74> spawn( srv@localhost, fun() -> Pid ! whereis(pear) end). 
+<7801.136.0>
+(a@localhost)75> flush().                                                
+Shell got undefined
+ok
